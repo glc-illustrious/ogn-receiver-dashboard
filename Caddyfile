@@ -1,0 +1,14 @@
+{$DOMAIN:ogn-dashboard.example.com} {
+    # API and WebSocket → backend
+    handle /api/* {
+        reverse_proxy backend:3001
+    }
+    handle /ws/* {
+        reverse_proxy backend:3001
+    }
+
+    # Frontend → nginx
+    handle {
+        reverse_proxy frontend:80
+    }
+}
