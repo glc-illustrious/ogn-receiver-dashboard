@@ -46,9 +46,17 @@ export async function receiversRoutes(app: FastifyInstance): Promise<void> {
         )
         .get(r.id, fiveMinAgo) as { avg_snr: number | null };
 
+      // Check for recent APRS activity (receiver_status or aircraft_positions)
+      const latestAprs = db
+        .prepare(
+          'SELECT timestamp FROM receiver_status WHERE receiver_id = ? ORDER BY timestamp DESC LIMIT 1',
+        )
+        .get(r.id) as { timestamp: string } | undefined;
+
       let status: ReceiverStatus = 'offline';
       const warnings: string[] = [];
 
+      // Determine status from health metrics (Pi push) if available
       if (latestHealth) {
         const age = Date.now() - new Date(latestHealth.timestamp).getTime();
         if (age < RECEIVER_STATUS_THRESHOLDS.ONLINE_MAX_AGE_MS) {
@@ -59,6 +67,19 @@ export async function receiversRoutes(app: FastifyInstance): Promise<void> {
           } else {
             status = 'online';
           }
+        }
+      }
+
+      // Also consider online if we see recent aircraft positions (APRS data flowing)
+      if (status === 'offline' && aircraftCount > 0) {
+        status = 'online';
+      }
+
+      // Or if we got a recent APRS receiver status beacon
+      if (status === 'offline' && latestAprs) {
+        const aprsAge = Date.now() - new Date(latestAprs.timestamp).getTime();
+        if (aprsAge < RECEIVER_STATUS_THRESHOLDS.ONLINE_MAX_AGE_MS) {
+          status = 'online';
         }
       }
 

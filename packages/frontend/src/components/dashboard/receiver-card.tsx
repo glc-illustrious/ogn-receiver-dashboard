@@ -9,9 +9,7 @@ interface ReceiverCardProps {
 export function ReceiverCard({ receiver }: ReceiverCardProps) {
   return (
     <GlassCard
-      className={`transition-[border-color] duration-200 hover:border-white/[0.12] ${
-        receiver.status === 'offline' ? 'opacity-50' : ''
-      }`}
+      className="transition-[border-color] duration-200 hover:border-white/[0.12]"
     >
       <div className="flex justify-between items-center mb-3.5">
         <div>
@@ -27,7 +25,7 @@ export function ReceiverCard({ receiver }: ReceiverCardProps) {
         <div>
           <div className="text-[10px] text-white/30 uppercase tracking-wider">Aircraft</div>
           <div className="text-[16px] font-medium mt-0.5">
-            {receiver.status === 'offline' ? '—' : receiver.aircraft_count}
+            {receiver.aircraft_count}
           </div>
         </div>
         <div>
