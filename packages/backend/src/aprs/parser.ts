@@ -65,7 +65,7 @@ function parseTimestamp(hhmmss: string): string {
   return now.toISOString();
 }
 
-export function parseAPRS(line: string): ParsedAPRS | null {
+export function parseAPRS(line: string): ParsedAircraftBeacon | ParsedReceiverBeacon | ParsedAPRS | null {
   // Skip comments and server messages
   if (line.startsWith('#') || !line.includes('>')) {
     return null;
@@ -126,7 +126,7 @@ export function parseAPRS(line: string): ParsedAPRS | null {
       gps_accuracy: gpsMatch ? gpsMatch[1] : null,
       stealth,
       no_tracking,
-    } satisfies ParsedAircraftBeacon;
+    } as ParsedAircraftBeacon;
   }
 
   // Receiver status beacon (qAR from receiver itself, no id field)
@@ -159,7 +159,7 @@ export function parseAPRS(line: string): ParsedAPRS | null {
         temperature_c: tempMatch ? parseFloat(tempMatch[1]) : null,
         rf_correction_ppm: rfCorrMatch ? parseFloat(rfCorrMatch[1]) : null,
         rf_noise_db: rfNoiseMatch ? parseFloat(rfNoiseMatch[1]) : null,
-      } satisfies ParsedReceiverBeacon;
+      } as ParsedReceiverBeacon;
     }
   }
 
