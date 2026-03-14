@@ -172,7 +172,7 @@ export default function RangeMapPage() {
             zoom: 7,
           }}
           style={{ width: '100%', height: '100%' }}
-          mapStyle="https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json"
+          mapStyle="https://tiles.openfreemap.org/styles/dark"
         >
           <NavigationControl position="bottom-right" />
 
