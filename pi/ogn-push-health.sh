@@ -6,7 +6,7 @@
 #   1. Copy to /home/pi/scripts/ogn-push-health.sh
 #   2. chmod +x /home/pi/scripts/ogn-push-health.sh
 #   3. Create /home/pi/.ogn-dashboard.env with:
-#      OGN_DASHBOARD_URL=https://ogn-dashboard.example.com
+#      OGN_DASHBOARD_URL=https://ogn.besters.digital
 #      OGN_RECEIVER_ID=EHGR
 #      OGN_DASHBOARD_API_KEY=<your-api-key>
 #   4. Add to crontab:
@@ -69,7 +69,6 @@ if [ -n "$THROTTLE_RAW" ]; then
 fi
 
 # Build warnings list
-WARNINGS=""
 WARN_LIST=()
 [ -n "$THROTTLE_FLAGS" ] && WARN_LIST+=("$THROTTLE_FLAGS")
 [ "$OGN_RF" = "DEAD" ] && WARN_LIST+=("OGN_RF_DEAD")
@@ -81,30 +80,32 @@ if [ -n "$CPU_TEMP" ]; then
 fi
 WARNINGS=$(IFS=,; echo "${WARN_LIST[*]}")
 
+# JSON helper: output number or null
+json_num() { [ -n "$1" ] && echo "$1" || echo "null"; }
+# JSON helper: output quoted string or null
+json_str() { [ -n "$1" ] && echo "\"$1\"" || echo "null"; }
+
 # Build JSON payload
 JSON=$(cat <<EOF
 {
   "timestamp": "$TIMESTAMP",
-  "uptime_s": ${UPTIME:-null},
-  "cpu_temp_c": ${CPU_TEMP:-null},
-  "core_voltage": ${CORE_VOLTAGE:-null},
-  "throttle_raw": ${THROTTLE_RAW:+\"$THROTTLE_RAW\"},
-  "throttle_flags": ${THROTTLE_FLAGS:+\"$THROTTLE_FLAGS\"},
-  "cpu_load": ${CPU_LOAD:-null},
-  "mem_avail_mb": ${MEM_AVAIL:-null},
-  "wifi_ssid": ${WIFI_SSID:+\"$WIFI_SSID\"},
-  "wifi_signal": ${WIFI_SIGNAL:-null},
-  "usb_rtl_count": ${USB_RTL:-null},
-  "ogn_rf_status": ${OGN_RF:+\"$OGN_RF\"},
-  "ogn_decode_status": ${OGN_DECODE:+\"$OGN_DECODE\"},
-  "aprs_lines": ${APRS_LINES:-null},
-  "warnings": ${WARNINGS:+\"$WARNINGS\"}
+  "uptime_s": $(json_num "$UPTIME"),
+  "cpu_temp_c": $(json_num "$CPU_TEMP"),
+  "core_voltage": $(json_num "$CORE_VOLTAGE"),
+  "throttle_raw": $(json_str "$THROTTLE_RAW"),
+  "throttle_flags": $(json_str "$THROTTLE_FLAGS"),
+  "cpu_load": $(json_num "$CPU_LOAD"),
+  "mem_avail_mb": $(json_num "$MEM_AVAIL"),
+  "wifi_ssid": $(json_str "$WIFI_SSID"),
+  "wifi_signal": $(json_num "$WIFI_SIGNAL"),
+  "usb_rtl_count": $(json_num "$USB_RTL"),
+  "ogn_rf_status": $(json_str "$OGN_RF"),
+  "ogn_decode_status": $(json_str "$OGN_DECODE"),
+  "aprs_lines": $(json_num "$APRS_LINES"),
+  "warnings": $(json_str "$WARNINGS")
 }
 EOF
 )
-
-# Clean up null strings for missing optional fields
-JSON=$(echo "$JSON" | sed 's/: ,/: null,/g; s/: $/: null/g; s/: }$/: null}/g')
 
 # POST to dashboard
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
