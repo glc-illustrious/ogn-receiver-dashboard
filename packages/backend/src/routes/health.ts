@@ -39,7 +39,7 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
       insertHealthMetrics(data);
 
       // Broadcast via WebSocket
-      app.websocketServer?.clients.forEach((client) => {
+      app.websocketServer?.clients.forEach((client: import('ws').WebSocket) => {
         if (client.readyState === 1) {
           client.send(
             JSON.stringify({ type: 'health_update', data }),

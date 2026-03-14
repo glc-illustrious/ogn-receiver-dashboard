@@ -11,7 +11,7 @@ COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 COPY packages/frontend/ packages/frontend/
 
-RUN npm run build -w packages/frontend
+RUN npx tsc -b packages/shared && npm run build -w packages/frontend
 
 FROM nginx:alpine
 COPY --from=builder /app/packages/frontend/dist /usr/share/nginx/html

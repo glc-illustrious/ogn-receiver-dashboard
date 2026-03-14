@@ -11,7 +11,7 @@ COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 COPY packages/backend/ packages/backend/
 
-RUN npm run build -w packages/backend
+RUN npx tsc -b packages/shared && npm run build -w packages/backend
 
 FROM node:22-alpine
 
