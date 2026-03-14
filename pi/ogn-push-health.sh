@@ -2,6 +2,9 @@
 # OGN Dashboard Health Push Script
 # Parses the last line of ogn-diagnostics.log and POSTs to the dashboard API.
 #
+# Expected log format (from ogn-diagnostics.sh):
+#   2026-03-14 18:47:01 | up=95622s temp=38.4C vcore=0.8500V throttle=0x0 load=1.05 mem=1328MB | wifi=GLC-Veld(81%) usb_rtl=1 | rf=ok(15240) dec=ok(15416) aprs=0 | OK
+#
 # Install:
 #   1. Copy to /home/pi/scripts/ogn-push-health.sh
 #   2. chmod +x /home/pi/scripts/ogn-push-health.sh
@@ -38,23 +41,36 @@ fi
 LAST_LINE=$(tail -n 1 "$LOG_FILE")
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Parse diagnostics fields
+# Parse diagnostics fields from actual log format:
+#   up=95622s temp=38.4C vcore=0.8500V throttle=0x0 load=1.05 mem=1328MB
+#   wifi=GLC-Veld(81%) usb_rtl=1 rf=ok(15240) dec=ok(15416) aprs=0
 parse_field() {
     echo "$LAST_LINE" | grep -oP "$1" | head -1 || echo ""
 }
 
-UPTIME=$(parse_field 'uptime=\K\d+' || echo "")
-CPU_TEMP=$(parse_field 'cpu_temp=\K[\d.]+' || echo "")
-CORE_VOLTAGE=$(parse_field 'core_voltage=\K[\d.]+' || echo "")
-THROTTLE_RAW=$(parse_field 'throttle=\K0x[0-9a-fA-F]+' || echo "")
-CPU_LOAD=$(parse_field 'cpu_load=\K[\d.]+' || echo "")
-MEM_AVAIL=$(parse_field 'mem_avail=\K\d+' || echo "")
-WIFI_SSID=$(parse_field 'wifi_ssid=\K[^\s]+' || echo "")
-WIFI_SIGNAL=$(parse_field 'wifi_signal=\K-?\d+' || echo "")
-USB_RTL=$(parse_field 'usb_rtl=\K\d+' || echo "")
-OGN_RF=$(parse_field 'ogn_rf=\K\w+' || echo "")
-OGN_DECODE=$(parse_field 'ogn_decode=\K\w+' || echo "")
-APRS_LINES=$(parse_field 'aprs_lines=\K\d+' || echo "")
+UPTIME=$(parse_field 'up=\K\d+')
+CPU_TEMP=$(parse_field 'temp=\K[\d.]+')
+CORE_VOLTAGE=$(parse_field 'vcore=\K[\d.]+')
+THROTTLE_RAW=$(parse_field 'throttle=\K0x[0-9a-fA-F]+')
+CPU_LOAD=$(parse_field 'load=\K[\d.]+')
+MEM_AVAIL=$(parse_field 'mem=\K\d+')
+WIFI_SSID=$(parse_field 'wifi=\K[^(]+')
+WIFI_SIGNAL=$(parse_field 'wifi=[^(]+\(\K\d+')
+USB_RTL=$(parse_field 'usb_rtl=\K\d+')
+OGN_RF_RAW=$(parse_field 'rf=\K\w+')
+OGN_DECODE_RAW=$(parse_field 'dec=\K\w+')
+APRS_LINES=$(parse_field 'aprs=\K\d+')
+
+# Map rf/dec status: "ok" → "RUNNING", anything else → "DEAD"
+OGN_RF=""
+if [ -n "$OGN_RF_RAW" ]; then
+    [ "$OGN_RF_RAW" = "ok" ] && OGN_RF="RUNNING" || OGN_RF="DEAD"
+fi
+
+OGN_DECODE=""
+if [ -n "$OGN_DECODE_RAW" ]; then
+    [ "$OGN_DECODE_RAW" = "ok" ] && OGN_DECODE="RUNNING" || OGN_DECODE="DEAD"
+fi
 
 # Parse throttle flags
 THROTTLE_FLAGS=""
