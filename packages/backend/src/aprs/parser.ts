@@ -10,7 +10,7 @@ const HEADER_RE =
 
 // Position: /HHMMSSh DDMM.MMN/DDDMM.MME' CCC/SSS/A=AAAAAA
 const POS_RE =
-  /\/(\d{6})h(\d{4}\.\d{2})([NS])[\/\\](\d{5}\.\d{2})([EW])['"A-Za-z](\d{3})\/(\d{3})\/A=(\d{6})/;
+  /\/(\d{6})h(\d{4}\.\d{2})([NS])[\/\\](\d{5}\.\d{2})([EW])['"^A-Za-z\/\\](\d{3})\/(\d{3})\/A=(\d{6})/;
 
 // Position precision enhancement: !W{d1}{d2}!
 const PRECISION_RE = /!W(\d)(\d)!/;
