@@ -6,7 +6,7 @@ import type { ReceiverWithStatus, ReceiverStatus } from '@ogn-dashboard/shared';
 export async function receiversRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/receivers', async () => {
     const db = getDb();
-    const receivers = db.prepare('SELECT * FROM receivers').all() as Array<{
+    const receivers = db.prepare('SELECT id, name, latitude, longitude, altitude, created_at, updated_at FROM receivers').all() as Array<{
       id: string;
       name: string;
       latitude: number;
